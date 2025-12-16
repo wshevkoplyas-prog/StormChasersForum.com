@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">StormChasersForum | Сообщество Охотников за Штормами</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="login-scene" class="scene" style="display: none;">
+        <header class="login-header">
+            <h1 class="logo">🌪️ StormChasersForum</h1>
+            <p data-i18n="tagline">Ваше сообщество по отслеживанию погоды и погоням за штормами.</p>
+            <button id="lang-toggle-login" class="btn lang-toggle-btn" data-i18n="lang_ru_short">EN</button>
+        </header>
+        
+        <div class="container login-container">
+            
+            <section class="card auth-card">
+                <h2 data-i18n="login_title">Вход</h2>
+                <form id="login-form">
+                    <input type="text" id="log-nickname" data-i18n-ph="nickname_ph" placeholder="Ваш Никнейм" required>
+                    <input type="password" id="log-password" data-i18n-ph="password_ph" placeholder="Пароль" required>
+                    <button type="submit" class="btn primary-btn" data-i18n="login_button">Войти</button>
+                </form>
+            </section>
+            
+            <section class="card auth-card">
+                <h2 data-i18n="register_title">Регистрация</h2>
+                <form id="register-form">
+                    <input type="text" id="reg-nickname" data-i18n-ph="nickname_ph" placeholder="Ваш Никнейм" required>
+                    <input type="password" id="reg-password" data-i18n-ph="password_ph" placeholder="Пароль" required>
+                    <button type="submit" class="btn secondary-btn" data-i18n="register_button">Зарегистрироваться</button>
+                </form>
+            </section>
+        </div>
+    </div>
+
+
+    <div id="main-scene" class="scene" style="display: none;">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="nav-buttons">
+                    <h1 class="logo">🌪️ StormChasersForum</h1>
+                    <button class="btn nav-btn active" data-target="dashboard" data-i18n="nav_feed">Лента</button>
+                    <button class="btn nav-btn" data-target="profile" data-i18n="nav_profile">Мой Профиль</button>
+                    <button class="btn nav-btn" data-target="rules" data-i18n="nav_rules">Правила</button>
+                </div>
+                
+                <div class="user-info">
+                    <p><span data-i18n="welcome">Добро пожаловать</span>, <strong id="display-nickname" class="highlight"></strong>!</p>
+                    <button id="logout-btn" class="btn logout-btn" data-i18n="logout_button">Выйти</button>
+                </div>
+                <button id="lang-toggle-main" class="btn lang-toggle-btn" data-i18n="lang_ru_short">EN</button>
+            </div>
+        </header>
+
+        <div class="container main-content-grid">
+            
+            <section id="post-form" class="card post-form-card">
+                <h2 data-i18n="post_form_title">⚡️ Создать новый отчет</h2>
+                <form id="new-post-form">
+                    <input type="text" id="post-media" data-i18n-ph="media_ph" placeholder="Ссылка на фото/видео (URL) или оставьте пустым" value="https://via.placeholder.com/760x300?text=Мой+Отчет+о+Шторме" />
+                    <textarea id="post-content" data-i18n-ph="content_ph" placeholder="Опишите свою погоню (где, когда, класс торнадо)" required></textarea>
+                    <button type="submit" class="btn primary-btn full-width" data-i18n="publish_button">Опубликовать отчет</button>
+                </form>
+            </section>
+            
+            <section id="reports" class="feed-section">
+                <h2 data-i18n="feed_title">Лента сообщества</h2>
+                <div id="posts-feed">
+                    </div>
+            </section>
+        </div>
+    </div>
+
+
+    <div id="profile-scene" class="scene" style="display: none;">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="nav-buttons">
+                    <h1 class="logo">🌪️ StormChasersForum</h1>
+                    <button class="btn nav-btn" data-target="dashboard" data-i18n="nav_feed">Лента</button>
+                    <button class="btn nav-btn active" data-target="profile" data-i18n="nav_profile">Мой Профиль</button>
+                    <button class="btn nav-btn" data-target="rules" data-i18n="nav_rules">Правила</button>
+                </div>
+                
+                <div class="user-info">
+                    <p><span data-i18n="logged_in_as">Вы вошли как</span>: <strong id="profile-nickname" class="highlight"></strong></p>
+                    <button id="logout-btn-2" class="btn logout-btn" data-i18n="logout_button">Выйти</button>
+                </div>
+                <button id="lang-toggle-profile" class="btn lang-toggle-btn" data-i18n="lang_ru_short">EN</button>
+            </div>
+        </header>
+
+        <div class="container profile-content">
+            <section class="card profile-summary">
+                <h2 data-i18n="profile_title_1">⭐ Профиль</h2> <span id="profile-display-name" class="highlight"></span>
+                <div class="stats-grid">
+                    <div>
+                        <h3 data-i18n="posts_count">Постов</h3>
+                        <p id="post-count" class="stat-number">0</p>
+                    </div>
+                    <div>
+                        <h3 data-i18n="likes_count">Лайков</h3>
+                        <p id="like-count" class="stat-number">0</p>
+                    </div>
+                    <div>
+                        <h3 data-i18n="member_since">На сайте с</h3>
+                        <p id="reg-date" class="stat-number date-text">Неизвестно</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card bio-editor">
+                <h3 data-i18n="bio_editor_title" id="bio-editor-title">✍️ Обо мне</h3>
+                <textarea id="profile-bio" data-i18n-ph="bio_ph" placeholder="Расскажите о себе, своем любимом снаряжении или самой запоминающейся погоне." style="height: 150px;"></textarea>
+                <button class="btn secondary-btn" id="save-bio-btn" style="margin-top: 10px;" data-i18n="save_button">Сохранить информацию</button>
+                <p class="status-message" id="save-status"></p>
+            </section>
+        </div>
+    </div>
+
+    <div id="rules-scene" class="scene" style="display: none;">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="nav-buttons">
+                    <h1 class="logo">🌪️ StormChasersForum</h1>
+                    <button class="btn nav-btn" data-target="dashboard" data-i18n="nav_feed">Лента</button>
+                    <button class="btn nav-btn" data-target="profile" data-i18n="nav_profile">Мой Профиль</button>
+                    <button class="btn nav-btn active" data-target="rules" data-i18n="nav_rules">Правила</button>
+                </div>
+                
+                <div class="user-info">
+                    <p><span data-i18n="logged_in_as">Вы вошли как</span>: <strong id="rules-nickname" class="highlight"></strong></p>
+                    <button id="logout-btn-3" class="btn logout-btn" data-i18n="logout_button">Выйти</button>
+                </div>
+                <button id="lang-toggle-rules" class="btn lang-toggle-btn" data-i18n="lang_ru_short">EN</button>
+            </div>
+        </header>
+        
+        <div class="container">
+            <section class="card">
+                <h2 data-i18n="rules_main_title">📜 Основные Правила Сообщества</h2>
+                <ul>
+                    <li data-i18n="rule_1_p">**Уважение:** Всегда будьте вежливы к другим участникам, независимо от их опыта.</li>
+                    <li data-i18n="rule_2_p">**Релевантность:** Публикуйте только контент, связанный с охотой на штормы, метеорологией и опасными погодными явлениями.</li>
+                    <li data-i18n="rule_3_p">**Безопасность:** Не публикуйте контент, который пропагандирует опасное поведение или нарушение закона.</li>
+                </ul>
+            </section>
+            
+            <section class="card">
+                <h2 data-i18n="media_guide_title">📸 Инструкция: Публикация медиа</h2>
+                <p data-i18n="media_guide_p1">Используйте прямую ссылку (URL) на изображение или видео для публикации:</p>
+                <ol>
+                    <li data-i18n="media_guide_step1">Найдите медиафайл и **скопируйте прямую ссылку** (URL).</li>
+                    <li data-i18n="media_guide_step2">Вставьте ссылку в поле **"Ссылка на фото/видео"** в форме публикации.</li>
+                </ol>
+            </section>
+            <button class="btn primary-btn scene-toggle-btn" data-target="dashboard" data-i18n="back_to_feed">Вернуться в Ленту</button>
+        </div>
+    </div>
+
+    <footer>
+        <p><span data-i18n="footer_copy">&copy; 2025 StormChasersForum. Сделано с ⚡️.</span></p>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>
