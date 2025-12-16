@@ -17,7 +17,6 @@
         </header>
         
         <div class="container login-container">
-            
             <section class="card auth-card">
                 <h2 data-i18n="login_title">Вход</h2>
                 <form id="login-form">
@@ -45,6 +44,7 @@
                 <div class="nav-buttons">
                     <h1 class="logo">🌪️ StormChasersForum</h1>
                     <button class="btn nav-btn active" data-target="dashboard" data-i18n="nav_feed">Лента</button>
+                    <button class="btn nav-btn" data-target="messages" data-i18n="nav_messages">Сообщения</button>
                     <button class="btn nav-btn" data-target="profile" data-i18n="nav_profile">Мой Профиль</button>
                     <button class="btn nav-btn" data-target="rules" data-i18n="nav_rules">Правила</button>
                 </div>
@@ -77,12 +77,54 @@
     </div>
 
 
+    <div id="messages-scene" class="scene" style="display: none;">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="nav-buttons">
+                    <h1 class="logo">🌪️ StormChasersForum</h1>
+                    <button class="btn nav-btn" data-target="dashboard" data-i18n="nav_feed">Лента</button>
+                    <button class="btn nav-btn active" data-target="messages" data-i18n="nav_messages">Сообщения</button>
+                    <button class="btn nav-btn" data-target="profile" data-i18n="nav_profile">Мой Профиль</button>
+                    <button class="btn nav-btn" data-target="rules" data-i18n="nav_rules">Правила</button>
+                </div>
+                
+                <div class="user-info">
+                    <p><span data-i18n="logged_in_as">Вы вошли как</span>: <strong id="messages-nickname" class="highlight"></strong></p>
+                    <button id="logout-btn-4" class="btn logout-btn" data-i18n="logout_button">Выйти</button>
+                </div>
+                <button id="lang-toggle-messages" class="btn lang-toggle-btn" data-i18n="lang_ru_short">EN</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="card soft-shadow message-container">
+                <div class="chat-list-sidebar" id="chat-list">
+                    <h3 data-i18n="chats_title">💬 Диалоги</h3>
+                    <p class="text-muted" data-i18n="msg_no_chats">Пока нет активных чатов.</p>
+                </div>
+                
+                <div class="active-chat-window" id="active-chat-window">
+                    <h3 id="chat-header" data-i18n="msg_select_chat">Выберите собеседника...</h3>
+                    <div class="chat-messages" id="chat-messages-area">
+                        </div>
+                    
+                    <form class="chat-input-form" id="chat-input-form">
+                        <textarea id="chat-input" data-i18n-ph="msg_chat_input_ph" placeholder="Написать сообщение..." required disabled></textarea>
+                        <button type="submit" class="btn primary-btn" id="send-chat-btn" disabled data-i18n="msg_comment_button">Отправить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <div id="profile-scene" class="scene" style="display: none;">
         <header class="app-header">
             <div class="header-content">
                 <div class="nav-buttons">
                     <h1 class="logo">🌪️ StormChasersForum</h1>
                     <button class="btn nav-btn" data-target="dashboard" data-i18n="nav_feed">Лента</button>
+                    <button class="btn nav-btn" data-target="messages" data-i18n="nav_messages">Сообщения</button>
                     <button class="btn nav-btn active" data-target="profile" data-i18n="nav_profile">Мой Профиль</button>
                     <button class="btn nav-btn" data-target="rules" data-i18n="nav_rules">Правила</button>
                 </div>
@@ -95,7 +137,7 @@
             </div>
         </header>
 
-        <div class="container profile-content">
+        <div class="container profile-content-grid">
             <section class="card profile-summary">
                 <h2 data-i18n="profile_title_1">⭐ Профиль</h2> <span id="profile-display-name" class="highlight"></span>
                 <div class="stats-grid">
@@ -129,6 +171,7 @@
                 <div class="nav-buttons">
                     <h1 class="logo">🌪️ StormChasersForum</h1>
                     <button class="btn nav-btn" data-target="dashboard" data-i18n="nav_feed">Лента</button>
+                    <button class="btn nav-btn" data-target="messages" data-i18n="nav_messages">Сообщения</button>
                     <button class="btn nav-btn" data-target="profile" data-i18n="nav_profile">Мой Профиль</button>
                     <button class="btn nav-btn active" data-target="rules" data-i18n="nav_rules">Правила</button>
                 </div>
