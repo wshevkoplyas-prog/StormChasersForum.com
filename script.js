@@ -5,6 +5,7 @@ const USERS_KEY = 'tornadoHunterUsers';
 const CURRENT_USER_KEY = 'tornadoHunterCurrentUser'; 
 const BIO_KEY_PREFIX = 'tornadoHunterBio_'; 
 const LANG_KEY = 'tornadoHunterLanguage';
+const CHATS_KEY = 'tornadoHunterChats'; // НОВАЯ КОНСТАНТА ДЛЯ ЧАТОВ
 
 // Глобальный объект для хранения всех строк перевода
 const texts = {
@@ -19,6 +20,7 @@ const texts = {
         register_button: 'Зарегистрироваться',
         logout_button: 'Выйти',
         nav_feed: 'Лента',
+        nav_messages: '💬 Сообщения', // НОВЫЙ ПЕРЕВОД
         nav_profile: 'Мой Профиль',
         nav_rules: 'Правила',
         welcome: 'Добро пожаловать',
@@ -45,6 +47,13 @@ const texts = {
         media_guide_step2: 'Вставьте ссылку в поле **"Ссылка на фото/видео"** в форме публикации.',
         back_to_feed: 'Вернуться в Ленту',
         footer_copy: '&copy; 2025 StormChasersForum. Сделано с ⚡️.',
+        
+        // ЧАТЫ
+        chats_title: '💬 Диалоги',
+        msg_no_chats: 'Пока нет активных чатов.',
+        msg_select_chat: 'Выберите собеседника...',
+        msg_chat_input_ph: 'Написать сообщение...',
+        
         // Интерактивные сообщения
         msg_reg_exists: 'Пользователь с таким никнеймом уже существует!',
         msg_reg_success: (nickname) => `Регистрация успешна! Теперь Вы можете войти как ${nickname}.`,
@@ -70,7 +79,7 @@ const texts = {
         msg_comment_count: (count) => `Комментариев: ${count}`,
         msg_comment_input_ph: 'Напишите комментарий...',
         msg_comment_button: 'Комментировать',
-        lang_ru_short: 'EN', // Отображается, когда активен RU
+        lang_ru_short: 'EN',
     },
     en: {
         title: 'StormChasersForum | Storm Chasers Community',
@@ -83,6 +92,7 @@ const texts = {
         register_button: 'Register',
         logout_button: 'Logout',
         nav_feed: 'Feed',
+        nav_messages: '💬 Messages', // НОВЫЙ ПЕРЕВОД
         nav_profile: 'My Profile',
         nav_rules: 'Rules',
         welcome: 'Welcome',
@@ -109,6 +119,13 @@ const texts = {
         media_guide_step2: 'Paste the link into the **"Link to photo/video"** field in the publish form.',
         back_to_feed: 'Back to Feed',
         footer_copy: '&copy; 2025 StormChasersForum. Made with ⚡️.',
+
+        // ЧАТЫ
+        chats_title: '💬 Dialogs',
+        msg_no_chats: 'No active chats yet.',
+        msg_select_chat: 'Select a user...',
+        msg_chat_input_ph: 'Write a message...',
+
         // Интерактивные сообщения
         msg_reg_exists: 'A user with this nickname already exists!',
         msg_reg_success: (nickname) => `Registration successful! You can now log in as ${nickname}.`,
@@ -125,7 +142,7 @@ const texts = {
         msg_delete_fail: 'You do not have permission to delete this post.',
         msg_no_bio: 'The user has not shared any information yet.',
         msg_like: 'Like',
-        msg_unlike: 'Unlike',
+        msg_unlike: 'Like',
         msg_report_by: 'Report by',
         msg_you: '(You)',
         msg_published: 'Published',
@@ -134,7 +151,7 @@ const texts = {
         msg_comment_count: (count) => `Comments: ${count}`,
         msg_comment_input_ph: 'Write a comment...',
         msg_comment_button: 'Comment',
-        lang_ru_short: 'RU', // Отображается, когда активен EN
+        lang_ru_short: 'RU',
     }
 };
 
@@ -151,7 +168,7 @@ function translatePage(lang) {
     // Перевод статических элементов
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (translation[key]) {
+        if (typeof translation[key] === 'string') {
             el.innerHTML = translation[key];
         }
     });
@@ -159,7 +176,7 @@ function translatePage(lang) {
     // Перевод плейсхолдеров
     document.querySelectorAll('[data-i18n-ph]').forEach(el => {
         const key = el.getAttribute('data-i18n-ph');
-        if (translation[key]) {
+        if (typeof translation[key] === 'string') {
             el.setAttribute('placeholder', translation[key]);
         }
     });
@@ -179,22 +196,33 @@ function switchLanguage() {
     localStorage.setItem(LANG_KEY, currentLang);
     translatePage(currentLang);
     renderPosts(); // Перерисовываем посты, чтобы обновить текст в них
-    // Обновляем текст в полях, где он не является placeholder
     updateContextualText(loadUserSession());
+    // Обновляем список чатов
+    if (document.getElementById('messages-scene').style.display === 'block') {
+         renderChatList();
+    }
 }
 
 /** Обновляет контекстуальный текст в заголовках (например, "Обо мне") */
 function updateContextualText(nickname) {
     const lang = currentLang;
-    const isCurrentUser = nickname === loadUserSession();
+    const currentSessionUser = loadUserSession();
+    const isCurrentUser = nickname === currentSessionUser;
     
     // Обновление заголовка биографии
     const bioTitleEl = document.getElementById('bio-editor-title');
+    const saveBtnEl = document.getElementById('save-bio-btn');
+    const bioTextareaEl = document.getElementById('profile-bio');
+
     if (bioTitleEl) {
         if (isCurrentUser) {
             bioTitleEl.innerHTML = lang === 'ru' ? '✍️ Обо мне (Редактировать)' : '✍️ About Me (Edit)';
+            if (saveBtnEl) saveBtnEl.style.display = 'block';
+            if (bioTextareaEl) bioTextareaEl.disabled = false;
         } else {
             bioTitleEl.innerHTML = lang === 'ru' ? `✍️ О пользователе (${nickname})` : `✍️ About User (${nickname})`;
+            if (saveBtnEl) saveBtnEl.style.display = 'none';
+            if (bioTextareaEl) bioTextareaEl.disabled = true; // Запрещаем редактирование чужого профиля
         }
     }
 }
@@ -204,10 +232,10 @@ function updateContextualText(nickname) {
 function loadPosts() {
     const savedPosts = localStorage.getItem(POSTS_KEY);
     const posts = savedPosts ? JSON.parse(savedPosts) : [];
-    // Гарантируем, что у каждого поста есть поля 'likedBy' (для лайков-переключателей) и 'comments'
+    // Гарантируем, что у каждого поста есть поля 'likedBy' и 'comments'
     return posts.map(post => ({
         ...post,
-        likedBy: post.likedBy || [], // Массив никнеймов, которые лайкнули
+        likedBy: post.likedBy || [],
         comments: post.comments || []
     }));
 }
@@ -233,29 +261,193 @@ function loadBio(nickname) {
     return localStorage.getItem(BIO_KEY_PREFIX + nickname) || '';
 }
 
+function loadDisplayName(nickname) {
+    const users = loadUsers();
+    return users[nickname]?.displayName || nickname;
+}
+
+
+// --- ФУНКЦИИ УПРАВЛЕНИЯ ЧАТАМИ (НОВЫЙ БЛОК) ---
+
+let activeChatPartner = null;
+
+function loadChats() {
+    const savedChats = localStorage.getItem(CHATS_KEY);
+    return savedChats ? JSON.parse(savedChats) : {}; 
+}
+
+function saveChats(chatsObject) {
+    localStorage.setItem(CHATS_KEY, JSON.stringify(chatsObject));
+}
+
+function getDialogKey(user1, user2) {
+    // Гарантируем одинаковый ключ для диалога независимо от порядка пользователей
+    return [user1, user2].sort().join('-');
+}
+
+function formatTimeAgo(date, lang) {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const t = texts[lang];
+
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 7) {
+        return date.toLocaleDateString(lang);
+    } else if (days > 0) {
+        return lang === 'ru' ? `${days} д. назад` : `${days} d. ago`;
+    } else if (hours > 0) {
+        return lang === 'ru' ? `${hours} ч. назад` : `${hours} h. ago`;
+    } else if (minutes > 0) {
+        return lang === 'ru' ? `${minutes} мин. назад` : `${minutes} m. ago`;
+    } else {
+        return lang === 'ru' ? 'только что' : 'just now';
+    }
+}
+
+function renderChatList() {
+    const currentNickname = loadUserSession();
+    if (!currentNickname) return;
+
+    const chats = loadChats();
+    const chatList = document.getElementById('chat-list');
+    
+    const t = texts[currentLang];
+    chatList.innerHTML = `<h3 data-i18n="chats_title">${t.chats_title}</h3>`;
+    
+    let hasChats = false;
+
+    const dialogKeys = Object.keys(chats).filter(key => key.includes(currentNickname));
+
+    dialogKeys.forEach(key => {
+        hasChats = true;
+        const participants = key.split('-');
+        const partnerNickname = participants.find(n => n !== currentNickname);
+        
+        // Используем никнейм как отображаемое имя, если нет другого механизма
+        const partnerDisplayName = partnerNickname; 
+
+        const activeClass = (partnerNickname === activeChatPartner) ? 'active' : '';
+
+        const dialogItem = document.createElement('div');
+        dialogItem.className = `chat-dialog-item ${activeClass}`;
+        dialogItem.textContent = partnerDisplayName;
+        dialogItem.setAttribute('data-partner', partnerNickname);
+
+        dialogItem.addEventListener('click', () => {
+            setActiveChat(partnerNickname);
+        });
+
+        chatList.appendChild(dialogItem);
+    });
+
+    if (!hasChats) {
+        chatList.innerHTML += `<p class="text-muted">${t.msg_no_chats}</p>`;
+    }
+}
+
+function setActiveChat(partnerNickname) {
+    activeChatPartner = partnerNickname;
+    const currentNickname = loadUserSession();
+    const partnerDisplayName = partnerNickname;
+    
+    // Обновляем заголовок
+    document.getElementById('chat-header').textContent = `${texts[currentLang].chats_title.replace('💬', '')} с ${partnerDisplayName}`;
+
+    // Активируем форму ввода
+    document.getElementById('chat-input').disabled = false;
+    document.getElementById('send-chat-btn').disabled = false;
+    
+    // Снимаем активность со всех диалогов и ставим на текущий
+    document.querySelectorAll('.chat-dialog-item').forEach(item => item.classList.remove('active'));
+    document.querySelector(`.chat-dialog-item[data-partner="${partnerNickname}"]`)?.classList.add('active');
+
+    // Рендерим сообщения
+    const dialogKey = getDialogKey(currentNickname, partnerNickname);
+    const chats = loadChats();
+    const messages = chats[dialogKey] || [];
+    const messagesArea = document.getElementById('chat-messages-area');
+    messagesArea.innerHTML = '';
+
+    messages.forEach(msg => {
+        const isSent = msg.sender === currentNickname;
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat-message ${isSent ? 'chat-message-sent' : 'chat-message-received'}`;
+        
+        const timestamp = formatTimeAgo(new Date(msg.timestamp), currentLang);
+
+        msgDiv.innerHTML = `${msg.text} <span class="chat-timestamp">${timestamp}</span>`;
+        messagesArea.appendChild(msgDiv);
+    });
+
+    // Прокрутка вниз
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+function sendChatMessage(messageText, receiverNickname) {
+    const senderNickname = loadUserSession();
+    if (!senderNickname || !receiverNickname || !messageText.trim()) return;
+
+    const dialogKey = getDialogKey(senderNickname, receiverNickname);
+    const chats = loadChats();
+
+    if (!chats[dialogKey]) chats[dialogKey] = [];
+
+    const newMessage = {
+        sender: senderNickname,
+        text: messageText.trim(),
+        timestamp: new Date().toISOString()
+    };
+
+    chats[dialogKey].push(newMessage);
+    saveChats(chats);
+    
+    // Обновляем активный чат и список
+    renderChatList();
+    setActiveChat(receiverNickname);
+}
+
+
 // --- ФУНКЦИИ ОТОБРАЖЕНИЯ И ПЕРЕКЛЮЧЕНИЯ СЦЕН ---
 
-function toggleScenes(showSceneId) {
+function toggleScenes(showSceneId, targetNickname = null) {
     document.querySelectorAll('.scene').forEach(scene => {
         scene.style.display = 'none';
     });
     document.getElementById(showSceneId).style.display = 'block';
     
+    // Обновляем активную кнопку в навигации
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     const targetKey = showSceneId.replace('-scene', '');
-    const targetButton = document.querySelector(`.nav-btn[data-target="${targetKey}"]`);
-    if (targetButton) {
-        targetButton.classList.add('active');
-    }
+    document.querySelectorAll(`.nav-btn[data-target="${targetKey}"]`).forEach(btn => btn.classList.add('active'));
+
 
     const currentNickname = loadUserSession();
 
     if (showSceneId === 'profile-scene') {
-        loadProfile(currentNickname); 
+        const targetUser = targetNickname || currentNickname;
+        loadProfile(targetUser); 
     } else if (showSceneId === 'main-scene') {
+        document.getElementById('display-nickname').textContent = currentNickname;
         renderPosts();
     } else if (showSceneId === 'rules-scene') {
         document.getElementById('rules-nickname').textContent = currentNickname;
+    } else if (showSceneId === 'messages-scene') { // ОБРАБОТКА НОВОЙ СЦЕНЫ
+        document.getElementById('messages-nickname').textContent = currentNickname;
+        renderChatList();
+        if (targetNickname) {
+             setActiveChat(targetNickname);
+        } else {
+             // Сброс активного чата при входе, если не указан собеседник
+             activeChatPartner = null;
+             document.getElementById('chat-header').textContent = texts[currentLang].msg_select_chat;
+             document.getElementById('chat-messages-area').innerHTML = '';
+             document.getElementById('chat-input').disabled = true;
+             document.getElementById('send-chat-btn').disabled = true;
+        }
     }
 }
 
@@ -264,7 +456,7 @@ function toggleScenes(showSceneId) {
  * Создает HTML-элемент для одного поста, включая комментарии.
  */
 function createPostElement(postData, index, currentNickname) { 
-    const t = texts[currentLang]; // Получаем тексты для текущего языка
+    const t = texts[currentLang]; 
     const mediaUrl = postData.media || "https://via.placeholder.com/760x300?text=Нет+ссылки+на+фото"; 
     const canDelete = postData.name === currentNickname; 
     const authorName = postData.name;
@@ -275,6 +467,7 @@ function createPostElement(postData, index, currentNickname) {
 
     let mediaTag;
 
+    // Простая проверка URL на наличие расширения .mp4 (неполная, но работает для прототипа)
     if (mediaUrl.endsWith('.mp4') || mediaUrl.includes('youtube.com') || mediaUrl.includes('vimeo.com')) {
         mediaTag = `<video controls class="media-preview" src="${mediaUrl}">${t.msg_video_unsupported || 'Ваш браузер не поддерживает видео.'}</video>`;
     } else {
@@ -284,9 +477,9 @@ function createPostElement(postData, index, currentNickname) {
     // --- ФОРМИРОВАНИЕ КОММЕНТАРИЕВ ---
     const commentsHtml = postData.comments.map(comment => `
         <div class="comment">
-            <span class="comment-author">${comment.user}:</span> 
+            <span class="comment-author" data-nickname="${comment.user}">${comment.user}:</span> 
             ${comment.text}
-            <span class="comment-date">(${comment.date})</span>
+            <span class="comment-date">(${formatTimeAgo(new Date(comment.date), currentLang)})</span>
         </div>
     `).join('');
 
@@ -319,7 +512,7 @@ function createPostElement(postData, index, currentNickname) {
                 }
             </div>
             
-            <small>${t.msg_published}: ${postData.date}</small>
+            <small>${t.msg_published}: ${formatTimeAgo(new Date(postData.date), currentLang)}</small>
 
             <div class="comments-section" id="comments-section-${index}" style="display: none;">
                 <div class="comment-list">
@@ -344,6 +537,7 @@ function renderPosts() {
     postsFeed.innerHTML = ''; 
     const t = texts[currentLang];
     
+    // Отображаем посты в обратном порядке (самые новые сверху)
     posts.slice().reverse().forEach((post, i) => {
         const originalIndex = posts.length - 1 - i; 
         postsFeed.insertAdjacentHTML('beforeend', createPostElement(post, originalIndex, currentNickname)); 
@@ -352,322 +546,335 @@ function renderPosts() {
     if (posts.length === 0) {
         postsFeed.innerHTML = `<p style="text-align: center; color: #95a5a6; grid-column: 1 / -1;">${t.msg_post_empty}</p>`;
     }
+
+     // Добавляем слушатели к новым элементам
+    document.querySelectorAll('.author-link, .comment-author').forEach(el => {
+        el.addEventListener('click', function() {
+            const nickname = this.getAttribute('data-nickname');
+            toggleScenes('profile-scene', nickname); // Открываем профиль
+        });
+    });
 }
 
+/** * Загружает и отображает профиль.
+ * @param {string} nickname - Никнейм пользователя для отображения.
+ */
 function loadProfile(nickname) {
-    const allPosts = loadPosts();
-    const users = loadUsers();
-    
-    const isCurrentUser = nickname === loadUserSession();
-    const t = texts[currentLang];
-    
-    const userPosts = allPosts.filter(post => post.name === nickname);
-    // Лайки считаются по длине массива likedBy
-    const totalLikes = allPosts.reduce((sum, post) => sum + post.likedBy.length, 0); 
-
-    const regDate = users[nickname] && users[nickname].regDate 
-        ? new Date(users[nickname].regDate).toLocaleDateString(currentLang === 'ru' ? 'ru-RU' : 'en-US') 
-        : t.msg_profile_unknown;
-    
-    const bio = loadBio(nickname);
-
-    document.getElementById('profile-nickname').textContent = loadUserSession();
-    document.getElementById('profile-display-name').textContent = nickname;
-    document.getElementById('post-count').textContent = userPosts.length;
-    document.getElementById('like-count').textContent = totalLikes;
-    document.getElementById('reg-date').textContent = regDate;
-    
-    const bioTextarea = document.getElementById('profile-bio');
-    const saveBioBtn = document.getElementById('save-bio-btn');
-    
-    bioTextarea.value = bio;
-    
-    updateContextualText(nickname); // Обновляем заголовок "Обо мне"
-    
-    if (isCurrentUser) {
-        bioTextarea.disabled = false;
-        saveBioBtn.style.display = 'block';
-    } else {
-        bioTextarea.disabled = true;
-        saveBioBtn.style.display = 'none';
-        if (!bio) {
-            bioTextarea.value = t.msg_no_bio;
-        }
-    }
-}
-
-function viewParticipantProfile(nickname) {
-    toggleScenes('profile-scene');
-    loadProfile(nickname);
-}
-
-
-// --- ФУНКЦИИ ИНТЕРАКТИВА (ЛАЙКИ И КОММЕНТАРИИ) ---
-
-/**
- * Обрабатывает лайк/дизлайк.
- * @param {number} index - Индекс поста.
- * @param {string} currentNickname - Никнейм текущего пользователя.
- */
-function handleLike(index, currentNickname) {
-    const posts = loadPosts();
-    const post = posts[index];
-
-    if (post) {
-        const likedIndex = post.likedBy.indexOf(currentNickname);
-
-        if (likedIndex > -1) {
-            // Пользователь уже лайкнул -> Убрать лайк
-            post.likedBy.splice(likedIndex, 1);
-        } else {
-            // Пользователь не лайкнул -> Поставить лайк
-            post.likedBy.push(currentNickname);
-        }
-
-        savePosts(posts);
-        renderPosts(); // Перерисовываем, чтобы обновить счетчик
-    }
-}
-
-/**
- * Обрабатывает добавление комментария.
- * @param {number} index - Индекс поста.
- * @param {string} commentText - Текст комментария.
- * @param {string} currentNickname - Никнейм текущего пользователя.
- */
-function handleAddComment(index, commentText, currentNickname) {
-    const posts = loadPosts();
-    const post = posts[index];
-
-    if (post && commentText.trim()) {
-        const now = new Date();
-        const dateString = now.toLocaleTimeString(currentLang === 'ru' ? 'ru-RU' : 'en-US', { hour: '2-digit', minute: '2-digit' });
-
-        const newComment = {
-            user: currentNickname,
-            text: commentText,
-            date: dateString
-        };
-
-        post.comments.push(newComment);
-        savePosts(posts);
-        renderPosts(); // Перерисовываем
-    }
-}
-
-/**
- * Обрабатывает клик "Удалить".
- */
-function handleDelete(index) {
     const currentNickname = loadUserSession();
-    const posts = loadPosts();
+    const isCurrentUser = nickname === currentNickname;
+    const t = texts[currentLang];
+
+    // 1. Статистика
+    const allPosts = loadPosts();
+    const userPosts = allPosts.filter(p => p.name === nickname);
+    const postCount = userPosts.length;
+    const totalLikes = userPosts.reduce((sum, post) => sum + post.likedBy.length, 0);
+    const userDetails = loadUsers()[nickname] || {};
+    
+    document.getElementById('post-count').textContent = postCount;
+    document.getElementById('like-count').textContent = totalLikes;
+    document.getElementById('reg-date').textContent = userDetails.regDate || t.msg_profile_unknown;
+    
+    // 2. Биография
+    const bioTextarea = document.getElementById('profile-bio');
+    const userBio = loadBio(nickname);
+    
+    bioTextarea.value = userBio || (isCurrentUser ? '' : t.msg_no_bio);
+    
+    // 3. Заголовок
+    document.getElementById('profile-nickname').textContent = currentNickname;
+    document.getElementById('profile-display-name').textContent = nickname;
+
+    // 4. Кнопка "Начать Чат"
+    // Сначала удаляем старую кнопку чата, если она есть
+    document.querySelector('.profile-content-grid .start-chat-btn')?.remove();
+
+    if (!isCurrentUser) {
+        const chatButton = document.createElement('button');
+        chatButton.className = 'btn secondary-btn full-width mt-10 start-chat-btn';
+        chatButton.textContent = t.nav_messages.replace('💬', 'Чат с '); // "Чат с [никнейм]"
+        
+        chatButton.addEventListener('click', () => {
+            toggleScenes('messages-scene', nickname);
+        });
+
+        // Добавляем кнопку в контейнер профиля
+        const profileContainer = document.querySelector('.profile-content-grid');
+        if (profileContainer) {
+            // Вставляем кнопку перед секцией редактирования био
+            profileContainer.insertBefore(chatButton, profileContainer.querySelector('.bio-editor'));
+        }
+    }
+
+    // 5. Обновляем текст и доступность полей
+    updateContextualText(nickname);
+}
+
+
+// --- ФУНКЦИИ АВТОРИЗАЦИИ И РЕГИСТРАЦИИ ---
+
+function registerUser(nickname, password) {
+    const users = loadUsers();
+    const t = texts[currentLang];
+
+    if (users[nickname]) {
+        alert(t.msg_reg_exists);
+        return false;
+    }
+
+    users[nickname] = {
+        password: password,
+        regDate: new Date().toLocaleDateString(currentLang),
+        displayName: nickname // На данный момент никнейм и отображаемое имя совпадают
+    };
+
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    alert(t.msg_reg_success(nickname));
+    return true;
+}
+
+function loginUser(nickname, password) {
+    const users = loadUsers();
     const t = texts[currentLang];
     
-    if (posts[index] && posts[index].name === currentNickname) {
-        if (confirm(t.msg_delete_confirm(posts[index].name))) {
-            posts.splice(index, 1);
-            savePosts(posts);
-            
-            const activeSceneElement = document.querySelector('.scene[style*="block"]');
-            const activeSceneId = activeSceneElement ? activeSceneElement.id : 'main-scene';
-            
-            if (activeSceneId === 'profile-scene') {
-                loadProfile(currentNickname); 
-            } else {
-                renderPosts();
-            }
-        }
+    if (users[nickname] && users[nickname].password === password) {
+        saveUserSession(nickname);
+        alert(t.msg_login_welcome(nickname));
+        toggleScenes('main-scene');
+        return true;
     } else {
-        alert(t.msg_delete_fail);
+        alert(t.msg_login_fail);
+        return false;
     }
 }
 
-// --- ОСНОВНАЯ ЛОГИКА САЙТА (ИНИЦИАЛИЗАЦИЯ) ---
-document.addEventListener('DOMContentLoaded', () => {
-    
-    translatePage(currentLang); // ПЕРВЫЙ ЗАПУСК ПЕРЕВОДА
+function logoutUser() {
+    localStorage.removeItem(CURRENT_USER_KEY);
+    alert(texts[currentLang].msg_logout);
+    toggleScenes('login-scene');
+}
 
-    // 1. ПРОВЕРКА АВТОРИЗАЦИИ при старте
-    const currentUser = loadUserSession();
-    if (currentUser) {
+
+// --- ФУНКЦИИ ДЕЙСТВИЙ (ПОСТЫ, ЛАЙКИ, КОММЕНТАРИИ) ---
+
+function addNewPost(mediaUrl, content) {
+    const currentNickname = loadUserSession();
+    const t = texts[currentLang];
+
+    if (!currentNickname) {
+        alert(t.msg_post_fail);
+        return;
+    }
+    if (!content.trim()) {
+        alert(t.msg_content_req);
+        return;
+    }
+
+    const posts = loadPosts();
+    const newPost = {
+        id: Date.now(),
+        name: currentNickname,
+        date: new Date().toISOString(),
+        media: mediaUrl,
+        content: content.trim(),
+        likedBy: [],
+        comments: []
+    };
+
+    posts.push(newPost);
+    savePosts(posts);
+    renderPosts();
+    alert(t.msg_post_success(currentNickname));
+}
+
+function toggleLike(index) {
+    const posts = loadPosts();
+    const currentNickname = loadUserSession();
+    const post = posts[index];
+
+    if (!post) return;
+
+    const likeIndex = post.likedBy.indexOf(currentNickname);
+
+    if (likeIndex === -1) {
+        post.likedBy.push(currentNickname);
+    } else {
+        post.likedBy.splice(likeIndex, 1);
+    }
+
+    savePosts(posts);
+    renderPosts();
+}
+
+function deletePost(index) {
+    const posts = loadPosts();
+    const currentNickname = loadUserSession();
+    const post = posts[index];
+    const t = texts[currentLang];
+
+    if (!post) return;
+
+    if (post.name !== currentNickname) {
+        alert(t.msg_delete_fail);
+        return;
+    }
+
+    if (confirm(t.msg_delete_confirm(post.name))) {
+        posts.splice(index, 1);
+        savePosts(posts);
+        renderPosts();
+    }
+}
+
+function addComment(postIndex, commentText) {
+    const currentNickname = loadUserSession();
+    if (!currentNickname || !commentText.trim()) return;
+
+    const posts = loadPosts();
+    const post = posts[postIndex];
+
+    if (!post) return;
+
+    const newComment = {
+        user: currentNickname,
+        text: commentText.trim(),
+        date: new Date().toISOString()
+    };
+
+    post.comments.push(newComment);
+    savePosts(posts);
+    renderPosts();
+}
+
+function saveBio(bioText) {
+    const currentNickname = loadUserSession();
+    const t = texts[currentLang];
+    if (currentNickname) {
+        localStorage.setItem(BIO_KEY_PREFIX + currentNickname, bioText);
+        document.getElementById('save-status').textContent = t.msg_bio_saved;
+        setTimeout(() => document.getElementById('save-status').textContent = '', 3000);
+    }
+}
+
+
+// --- ИНИЦИАЛИЗАЦИЯ И ОБРАБОТЧИКИ СОБЫТИЙ ---
+
+document.addEventListener('DOMContentLoaded', () => {
+    translatePage(currentLang);
+    const currentNickname = loadUserSession();
+
+    if (currentNickname) {
         toggleScenes('main-scene');
     } else {
         toggleScenes('login-scene');
     }
+    
+    // 1. ОБРАБОТЧИКИ АВТОРИЗАЦИИ
+    document.getElementById('register-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const nickname = document.getElementById('reg-nickname').value;
+        const password = document.getElementById('reg-password').value;
+        if (registerUser(nickname, password)) {
+             this.reset();
+        }
+    });
 
-    // 2. ОБРАБОТКА ПЕРЕКЛЮЧЕНИЯ ЯЗЫКА (Все кнопки)
+    document.getElementById('login-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const nickname = document.getElementById('log-nickname').value;
+        const password = document.getElementById('log-password').value;
+        loginUser(nickname, password);
+    });
+
+    document.querySelectorAll('#logout-btn, #logout-btn-2, #logout-btn-3, #logout-btn-4').forEach(btn => {
+        btn.addEventListener('click', logoutUser);
+    });
+    
+    // 2. ОБРАБОТЧИКИ НАВИГАЦИИ (ПЕРЕКЛЮЧЕНИЕ СЦЕН)
+    document.querySelectorAll('.nav-btn, .scene-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const target = this.getAttribute('data-target');
+            toggleScenes(target + '-scene');
+        });
+    });
+
+    // 3. ОБРАБОТЧИКИ ЯЗЫКА
     document.querySelectorAll('.lang-toggle-btn').forEach(btn => {
         btn.addEventListener('click', switchLanguage);
     });
 
-    // 3. ОБРАБОТКА РЕГИСТРАЦИИ (Сцена 1)
-    document.getElementById('register-form').addEventListener('submit', function(e) {
+    // 4. ОБРАБОТЧИК ФОРМЫ ПОСТОВ
+    document.getElementById('new-post-form')?.addEventListener('submit', function(e) {
         e.preventDefault();
-        const nickname = document.getElementById('reg-nickname').value.trim();
-        const password = document.getElementById('reg-password').value;
-        const users = loadUsers();
-        const t = texts[currentLang];
-
-        if (users[nickname]) {
-            alert(t.msg_reg_exists);
-            return;
-        }
-
-        users[nickname] = {
-            password: password,
-            regDate: new Date().toISOString()
-        };
-        localStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-        alert(t.msg_reg_success(nickname));
+        const media = document.getElementById('post-media').value;
+        const content = document.getElementById('post-content').value;
+        addNewPost(media, content);
         this.reset();
+        // Вставляем заглушку, чтобы поле media не выглядело пустым
+        document.getElementById('post-media').value = 'https://via.placeholder.com/760x300?text=Мой+Отчет+о+Шторме';
     });
 
-    // 4. ОБРАБОТКА ВХОДА (Сцена 1)
-    document.getElementById('login-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const nickname = document.getElementById('log-nickname').value.trim();
-        const password = document.getElementById('log-password').value;
-        const users = loadUsers();
-        const t = texts[currentLang];
+    // 5. ОБРАБОТЧИК ФОРМЫ БИОГРАФИИ
+    document.getElementById('save-bio-btn')?.addEventListener('click', function() {
+        const bioText = document.getElementById('profile-bio').value;
+        saveBio(bioText);
+    });
 
-        if (users[nickname] && users[nickname].password === password) {
-            saveUserSession(nickname);
-            alert(t.msg_login_welcome(nickname));
-            toggleScenes('main-scene');
-        } else {
-            alert(t.msg_login_fail);
+    // 6. ОБРАБОТЧИКИ ЛАЙКОВ, УДАЛЕНИЯ И КОММЕНТАРИЕВ (Делегирование)
+    document.addEventListener('click', function(e) {
+        const target = e.target;
+        
+        // Кнопка ЛАЙКА
+        if (target.classList.contains('like-btn')) {
+            const index = parseInt(target.getAttribute('data-index'));
+            toggleLike(index);
+        }
+
+        // Кнопка УДАЛЕНИЯ
+        if (target.classList.contains('delete-btn')) {
+            const index = parseInt(target.getAttribute('data-index'));
+            deletePost(index);
+        }
+
+        // Кнопка ПОКАЗАТЬ/СКРЫТЬ КОММЕНТАРИИ
+        if (target.classList.contains('comment-toggle-btn')) {
+            const index = parseInt(target.getAttribute('data-index'));
+            const commentsSection = document.getElementById(`comments-section-${index}`);
+            if (commentsSection) {
+                commentsSection.style.display = commentsSection.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        // Клик по автору поста (для перехода в профиль)
+        if (target.classList.contains('author-link')) {
+             const nickname = target.getAttribute('data-nickname');
+             if (nickname) {
+                 toggleScenes('profile-scene', nickname);
+             }
         }
     });
 
-    // 5. ОБРАБОТКА ВЫХОДА (Все кнопки)
-    document.querySelectorAll('.logout-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            localStorage.removeItem(CURRENT_USER_KEY);
-            alert(texts[currentLang].msg_logout);
-            toggleScenes('login-scene');
-        });
+    // 7. ОБРАБОТЧИК ОТПРАВКИ КОММЕНТАРИЯ
+    document.addEventListener('submit', function(e) {
+        if (e.target.classList.contains('comment-form')) {
+            e.preventDefault();
+            const form = e.target;
+            const index = parseInt(form.getAttribute('data-index'));
+            const textarea = form.querySelector('textarea');
+            addComment(index, textarea.value);
+            textarea.value = ''; // Очистка поля
+        }
     });
+    
+    // 8. ОБРАБОТЧИК ОТПРАВКИ ЧАТА
+    document.getElementById('chat-input-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const textarea = document.getElementById('chat-input');
+        const messageText = textarea.value;
 
-    // 6. ОБРАБОТКА ПЕРЕКЛЮЧЕНИЯ СЦЕН (Лента/Профиль/Правила)
-    document.querySelectorAll('.nav-btn, .scene-toggle-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const target = this.getAttribute('data-target');
-            if (target === 'dashboard') {
-                toggleScenes('main-scene');
-            } else if (target === 'profile') {
-                toggleScenes('profile-scene');
-            } else if (target === 'rules') { 
-                toggleScenes('rules-scene');
-            }
-        });
+        if (messageText && activeChatPartner) {
+            sendChatMessage(messageText, activeChatPartner);
+            textarea.value = ''; 
+        }
     });
-
-    // 7. ОБРАБОТКА СОХРАНЕНИЯ БИОГРАФИИ
-    if (document.getElementById('save-bio-btn')) {
-        document.getElementById('save-bio-btn').addEventListener('click', function() {
-            const currentNickname = loadUserSession();
-            const bio = document.getElementById('profile-bio').value;
-            localStorage.setItem(BIO_KEY_PREFIX + currentNickname, bio); 
-            
-            const statusElement = document.getElementById('save-status');
-            statusElement.textContent = texts[currentLang].msg_bio_saved;
-            setTimeout(() => statusElement.textContent = '', 3000);
-        });
-    }
-
-    // 8. ОБРАБОТКА ПУБЛИКАЦИИ (Сцена 2)
-    if (document.getElementById('new-post-form')) {
-        document.getElementById('new-post-form').addEventListener('submit', function(e) { 
-            e.preventDefault(); 
-            
-            const authorName = loadUserSession(); 
-            const t = texts[currentLang];
-            if (!authorName) return alert(t.msg_post_fail);
-            
-            const content = document.getElementById('post-content').value;
-            const media = document.getElementById('post-media').value; 
-            
-            if (content.trim() === "") {
-                return alert(t.msg_content_req);
-            }
-
-            const now = new Date();
-            const dateString = now.toLocaleDateString(currentLang === 'ru' ? 'ru-RU' : 'en-US', { 
-                day: 'numeric', 
-                month: 'long', 
-                year: 'numeric' 
-            });
-
-            const newPost = {
-                name: authorName,
-                media: media, 
-                content: content,
-                date: dateString,
-                likedBy: [], // Инициализируем пустым массивом для лайков
-                comments: [] // Инициализируем пустым массивом для комментариев
-            };
-
-            const allPosts = loadPosts();
-            allPosts.push(newPost);
-            savePosts(allPosts); 
-            renderPosts();
-
-            this.reset();
-            // Сбрасываем поле media на заглушку
-            document.getElementById('post-media').value = "https://via.placeholder.com/760x300?text=Мой+Отчет+о+Шторме";
-            alert(t.msg_post_success(authorName));
-        });
-    }
-
-    // 9. Обработка кликов по ленте (Лайки/Удаление/Профиль/Комментарии)
-    if (postsFeed) {
-        postsFeed.addEventListener('click', function(e) {
-            const target = e.target;
-            const currentNickname = loadUserSession();
-            // Находим ближайший родительский элемент .chase-report для получения data-index
-            const postArticle = target.closest('.chase-report');
-            const index = postArticle ? parseInt(postArticle.getAttribute('data-index')) : -1;
-            
-            if (index === -1) return;
-
-            if (target.classList.contains('like-btn')) {
-                // ЛОГИКА ЛАЙК/ДИЗЛАЙК
-                handleLike(index, currentNickname);
-            } else if (target.classList.contains('delete-btn')) {
-                 // ЛОГИКА УДАЛЕНИЯ
-                handleDelete(index);
-            } else if (target.classList.contains('author-link') || target.closest('.author-link')) {
-                // ЛОГИКА ПРОСМОТРА ПРОФИЛЯ
-                const nickname = target.closest('.author-link').getAttribute('data-nickname');
-                viewParticipantProfile(nickname);
-            } else if (target.classList.contains('comment-toggle-btn')) {
-                // ЛОГИКА ПОКАЗАТЬ/СКРЫТЬ КОММЕНТАРИИ
-                const commentSection = document.getElementById(`comments-section-${index}`);
-                if (commentSection) {
-                    commentSection.style.display = commentSection.style.display === 'none' ? 'block' : 'none';
-                }
-            }
-        });
-
-        postsFeed.addEventListener('submit', function(e) {
-            // ЛОГИКА ДОБАВЛЕНИЯ КОММЕНТАРИЯ
-            if (e.target.classList.contains('comment-form')) {
-                e.preventDefault();
-                const form = e.target;
-                const index = parseInt(form.getAttribute('data-index'));
-                const textarea = form.querySelector('textarea');
-                const commentText = textarea.value;
-
-                handleAddComment(index, commentText, loadUserSession());
-                textarea.value = ''; // Очистка поля ввода
-                
-                // Снова показываем секцию комментариев после добавления
-                const commentSection = document.getElementById(`comments-section-${index}`);
-                 if (commentSection) {
-                    commentSection.style.display = 'block';
-                }
-            }
-        });
-    }
 });
